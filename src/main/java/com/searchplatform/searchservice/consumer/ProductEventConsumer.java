@@ -1,9 +1,6 @@
 package com.searchplatform.searchservice.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.gax.core.NoCredentialsProvider;
-import com.google.api.gax.grpc.GrpcTransportChannel;
-import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -12,8 +9,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.searchplatform.searchservice.model.ProductCreatedEvent;
 import com.searchplatform.searchservice.model.SearchProductDocument;
 import com.searchplatform.searchservice.service.SearchEngine;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +23,10 @@ public class ProductEventConsumer {
     @Value("${gcp.pubsub.subscription}")
     private String subscriptionId;
 
-    @Value("${gcp.pubsub.emulator-host}")
-    private String emulatorHost;
-
     private final SearchEngine searchEngine;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Subscriber subscriber;
-    private ManagedChannel channel;
 
     public ProductEventConsumer(SearchEngine searchEngine) {
         this.searchEngine = searchEngine;
@@ -47,7 +38,6 @@ public class ProductEventConsumer {
             System.out.println("===== SEARCH SERVICE PUBSUB CONFIG =====");
             System.out.println("Project ID: " + projectId);
             System.out.println("Subscription ID: " + subscriptionId);
-            System.out.println("Emulator Host: " + emulatorHost);
             System.out.println("========================================");
 
             ProjectSubscriptionName subscriptionName =
@@ -69,28 +59,19 @@ public class ProductEventConsumer {
                 } catch (Exception e) {
                     System.out.println("Failed to process Pub/Sub message");
                     e.printStackTrace();
-                    consumer.nack();
-                    System.out.println("NACK sent. Message will be retried.");
+
+                    consumer.nack(); // retry
                 }
             };
 
-            channel = ManagedChannelBuilder
-                    .forTarget(emulatorHost)
-                    .usePlaintext()
-                    .build();
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
 
-            subscriber = Subscriber.newBuilder(subscriptionName, receiver)
-                    .setChannelProvider(
-                            FixedTransportChannelProvider.create(
-                                    GrpcTransportChannel.create(channel)
-                            )
-                    )
-                    .setCredentialsProvider(NoCredentialsProvider.create())
-                    .build();
-
-            subscriber.startAsync().awaitRunning();
-
-            System.out.println("Pub/Sub subscriber started for: " + subscriptionId);
+            try {
+                subscriber.startAsync().awaitRunning();
+                System.out.println("Pub/Sub subscriber started for: " + subscriptionId);
+            } catch (Exception e) {
+                System.out.println("Running without Pub/Sub (local mode)");
+            }
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to start Pub/Sub subscriber", e);
@@ -118,9 +99,6 @@ public class ProductEventConsumer {
         try {
             if (subscriber != null) {
                 subscriber.stopAsync().awaitTerminated();
-            }
-            if (channel != null) {
-                channel.shutdownNow();
             }
             System.out.println("Pub/Sub subscriber stopped.");
         } catch (Exception e) {

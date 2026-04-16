@@ -17,8 +17,7 @@ spring:
         spring.json.value.default.type: com.searchplatform.searchservice.model.ProductCreatedEvent
 
 gcp:
-  project-id: test-project
+  project-id: ust-gcp-costco-replatform-poc
   pubsub:
-    emulator-host: 127.0.0.1:8085
     topic: product-events
     subscription: search-service-sub
