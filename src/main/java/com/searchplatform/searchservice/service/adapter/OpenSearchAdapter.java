@@ -1,23 +1,21 @@
 package com.searchplatform.searchservice.service.adapter;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.springframework.stereotype.Service;
 import com.searchplatform.searchservice.model.SearchProductDocument;
 import com.searchplatform.searchservice.service.SearchEngine;
-import org.springframework.stereotype.Service;
 
 @Service
-public class ElasticSearchAdapter implements SearchEngine {
+public class OpenSearchAdapter implements SearchEngine {
 
-    private final ElasticsearchClient client;
+    private final OpenSearchClient client;
 
-    public ElasticSearchAdapter(ElasticsearchClient client) {
+    public OpenSearchAdapter(OpenSearchClient client) {
         this.client = client;
     }
 
-
     @Override
     public void indexProduct(SearchProductDocument document) {
-
         try {
 
             client.index(i -> i
@@ -26,7 +24,7 @@ public class ElasticSearchAdapter implements SearchEngine {
                     .document(document)
             );
 
-            System.out.println("Indexed product into Elasticsearch: "
+            System.out.println("Indexed product into OpenSearch: "
                     + document.getName());
 
         } catch (Exception e) {
@@ -34,4 +32,3 @@ public class ElasticSearchAdapter implements SearchEngine {
         }
     }
 }
-

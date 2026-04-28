@@ -1,17 +1,19 @@
 package com.searchplatform.searchservice.service.impl;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.AggregationRange;
-import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.json.JsonData;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.FieldValue;
+import org.opensearch.client.opensearch._types.SortOrder;
+import org.opensearch.client.opensearch._types.aggregations.AggregationRange;
+import org.opensearch.client.opensearch._types.query_dsl.TextQueryType;
+import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.core.search.Hit;
+import org.opensearch.client.json.JsonData;
+
 import com.searchplatform.searchservice.model.FacetBucket;
 import com.searchplatform.searchservice.model.ProductSearchResponse;
 import com.searchplatform.searchservice.model.SearchProductDocument;
 import com.searchplatform.searchservice.service.ProductSearchService;
+
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -20,13 +22,13 @@ import java.util.List;
 @Service
 public class ProductSearchServiceImpl implements ProductSearchService {
 
-    private final ElasticsearchClient client;
+    private final OpenSearchClient client;
 
-    public ProductSearchServiceImpl(ElasticsearchClient client) {
+    public ProductSearchServiceImpl(OpenSearchClient client) {
         this.client = client;
     }
 
-
+    @Override
     public ProductSearchResponse searchProducts(
             String query,
             String brand,
@@ -39,176 +41,150 @@ public class ProductSearchServiceImpl implements ProductSearchService {
             String order
     ) throws IOException {
 
-        {
-            SortOrder sortOrder = "desc".equalsIgnoreCase(order)
-                    ? SortOrder.Desc
-                    : SortOrder.Asc;
+        SortOrder sortOrder = "desc".equalsIgnoreCase(order)
+                ? SortOrder.Desc
+                : SortOrder.Asc;
 
-            List<AggregationRange> priceRanges = List.of(
-                    AggregationRange.of(r -> r.to("10000")),
-                    AggregationRange.of(r -> r.from("10000").to("50000")),
-                    AggregationRange.of(r -> r.from("50000"))
-            );
+        List<AggregationRange> priceRanges = List.of(
+                AggregationRange.of(r -> r.to("10000")),
+                AggregationRange.of(r -> r.from("10000").to("50000")),
+                AggregationRange.of(r -> r.from("50000"))
+        );
 
-            SearchResponse<SearchProductDocument> response = client.search(s -> {
+        SearchResponse<SearchProductDocument> response = client.search(s -> {
 
-                s.index("products_v2")
-                        .from(page * size)
-                        .size(size);
+            s.index("products_v2")
+                    .from(page * size)
+                    .size(size);
 
-                s.query(q -> q
-                        .bool(b -> {
+            s.query(q -> q.bool(b -> {
 
-                            // Apply search only if query exists
-                            if (query != null && !query.trim().isBlank()) {
+                // 🔍 SEARCH
+                if (query != null && !query.trim().isBlank()) {
 
-                                // Main search: prefix / partial / brand / category / description
-                                b.should(m -> m
-                                        .multiMatch(mm -> mm
-                                                .query(query)
-                                                .type(TextQueryType.BoolPrefix)
-                                                .fields(
-                                                        "name^5",
-                                                        "name._2gram^4",
-                                                        "name._3gram^3",
-                                                        "brand^2",
-                                                        "category^2",
-                                                        "description"
-                                                )
-                                        )
-                                );
-
-                                // Fuzzy search: typo tolerance on product name
-                                if (query.trim().length() >= 4) {
-                                    b.should(sq -> sq
-                                            .match(m -> m
-                                                    .field("name")
-                                                    .query(query)
-                                                    .fuzziness("AUTO")
-                                                    .boost(2.0f)
-                                            )
-                                    );
-                                }
-
-                                // At least one search clause should match
-                                b.minimumShouldMatch("1");
-                            }
-
-                            // Filters
-                            if (brand != null && !brand.isBlank()) {
-                                b.filter(f -> f.term(t -> t
-                                        .field("brand")
-                                        .value(brand)));
-                            }
-
-                            if (category != null && !category.isBlank()) {
-                                b.filter(f -> f.term(t -> t
-                                        .field("category")
-                                        .value(category)));
-                            }
-
-                            if (priceMin != null || priceMax != null) {
-                                b.filter(f -> f.range(r -> {
-                                    r.field("price");
-
-                                    if (priceMin != null) {
-                                        r.gte(JsonData.of(priceMin));
-                                    }
-
-                                    if (priceMax != null) {
-                                        r.lte(JsonData.of(priceMax));
-                                    }
-
-                                    return r;
-                                }));
-                            }
-
-                            return b;
-                        })
-                );
-
-                if (sortField != null) {
-                    s.sort(sort -> sort
-                            .field(f -> f
-                                    .field(sortField)
-                                    .order(sortOrder)
+                    b.should(m -> m.multiMatch(mm -> mm
+                            .query(query)
+                            .type(TextQueryType.BoolPrefix)
+                            .fields(
+                                    "name^5",
+                                    "name._2gram^4",
+                                    "name._3gram^3",
+                                    "brand^2",
+                                    "category^2",
+                                    "description"
                             )
-                    );
+                    ));
+
+                    if (query.trim().length() >= 4) {
+                        b.should(sq -> sq.match(m -> m
+                                .field("name")
+                                .query(FieldValue.of(query))
+                                .fuzziness("AUTO")
+                                .boost(2.0f)
+                        ));
+                    }
+
+                    b.minimumShouldMatch("1");
                 }
 
-                // FACETS
-                s.aggregations("brands",
-                        a -> a.terms(t -> t.field("brand")));
+                // 🎯 FILTERS
+                if (brand != null && !brand.isBlank()) {
+                    b.filter(f -> f.term(t -> t
+                            .field("brand.keyword") // ⚠️ important fix
+                            .value(FieldValue.of(brand))));
+                }
 
-                s.aggregations("categories",
-                        a -> a.terms(t -> t.field("category")));
+                if (category != null && !category.isBlank()) {
+                    b.filter(f -> f.term(t -> t
+                            .field("category.keyword") // ⚠️ important fix
+                            .value(FieldValue.of(category))));
+                }
 
-                s.aggregations("price_ranges",
-                        a -> a.range(r -> r
-                                .field("price")
-                                .ranges(priceRanges)
-                        )
-                );
+                if (priceMin != null || priceMax != null) {
+                    b.filter(f -> f.range(r -> {
+                        r.field("price");
 
-                return s;
+                        if (priceMin != null) {
+                            r.gte(JsonData.of(priceMin));
+                        }
 
-            }, SearchProductDocument.class);
+                        if (priceMax != null) {
+                            r.lte(JsonData.of(priceMax));
+                        }
 
-            List<SearchProductDocument> products =
-                    response.hits()
-                            .hits()
-                            .stream()
-                            .map(hit -> hit.source())
-                            .toList();
+                        return r;
+                    }));
+                }
 
-            List<FacetBucket> brandFacets =
-                    response.aggregations()
-                            .get("brands")
-                            .sterms()
-                            .buckets()
-                            .array()
-                            .stream()
-                            .map(bucket -> new FacetBucket(
-                                    bucket.key().stringValue(),
-                                    bucket.docCount()))
-                            .toList();
+                return b;
+            }));
 
-            List<FacetBucket> categoryFacets =
-                    response.aggregations()
-                            .get("categories")
-                            .sterms()
-                            .buckets()
-                            .array()
-                            .stream()
-                            .map(bucket -> new FacetBucket(
-                                    bucket.key().stringValue(),
-                                    bucket.docCount()))
-                            .toList();
+            // 🔽 SORT
+            if (sortField != null) {
+                s.sort(sort -> sort.field(f -> f
+                        .field(sortField)
+                        .order(sortOrder)
+                ));
+            }
 
-            List<FacetBucket> priceFacets =
-                    response.aggregations()
-                            .get("price_ranges")
-                            .range()
-                            .buckets()
-                            .array()
-                            .stream()
-                            .map(bucket -> new FacetBucket(
-                                    bucket.key(),
-                                    bucket.docCount()))
-                            .toList();
+            // 📊 AGGREGATIONS
+            s.aggregations("brands",
+                    a -> a.terms(t -> t.field("brand.keyword")));
 
-            long total = response.hits().total().value();
+            s.aggregations("categories",
+                    a -> a.terms(t -> t.field("category.keyword")));
 
-            return new ProductSearchResponse(
-                    products,
-                    brandFacets,
-                    categoryFacets,
-                    priceFacets,
-                    total,
-                    page,
-                    size
+            s.aggregations("price_ranges",
+                    a -> a.range(r -> r
+                            .field("price")
+                            .ranges(priceRanges)
+                    )
             );
-        }
 
-        }
+            return s;
+
+        }, SearchProductDocument.class);
+
+        // 📦 RESULTS
+        List<SearchProductDocument> products =
+                response.hits().hits().stream()
+                        .map(Hit::source)
+                        .toList();
+
+        List<FacetBucket> brandFacets =
+                response.aggregations().get("brands")
+                        .sterms().buckets().array().stream()
+                        .map(bucket -> new FacetBucket(
+                                bucket.key(),
+                                bucket.docCount()))
+                        .toList();
+
+        List<FacetBucket> categoryFacets =
+                response.aggregations().get("categories")
+                        .sterms().buckets().array().stream()
+                        .map(bucket -> new FacetBucket(
+                                bucket.key(),
+                                bucket.docCount()))
+                        .toList();
+
+        List<FacetBucket> priceFacets =
+                response.aggregations().get("price_ranges")
+                        .range().buckets().array().stream()
+                        .map(bucket -> new FacetBucket(
+                                bucket.key(),
+                                bucket.docCount()))
+                        .toList();
+
+        long total = response.hits().total().value();
+
+        return new ProductSearchResponse(
+                products,
+                brandFacets,
+                categoryFacets,
+                priceFacets,
+                total,
+                page,
+                size
+        );
+    }
 }
