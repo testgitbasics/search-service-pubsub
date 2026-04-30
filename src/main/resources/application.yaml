@@ -4,6 +4,11 @@ spring:
   application:
     name: search-service
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/product_service
+    username: postgres
+    password: root
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
