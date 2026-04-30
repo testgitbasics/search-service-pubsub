@@ -90,13 +90,13 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 // 🎯 FILTERS
                 if (brand != null && !brand.isBlank()) {
                     b.filter(f -> f.term(t -> t
-                            .field("brand.keyword") // ⚠️ important fix
+                            .field("brand") // ⚠️ important fix
                             .value(FieldValue.of(brand))));
                 }
 
                 if (category != null && !category.isBlank()) {
                     b.filter(f -> f.term(t -> t
-                            .field("category.keyword") // ⚠️ important fix
+                            .field("category") // ⚠️ important fix
                             .value(FieldValue.of(category))));
                 }
 
@@ -129,10 +129,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
             // 📊 AGGREGATIONS
             s.aggregations("brands",
-                    a -> a.terms(t -> t.field("brand.keyword")));
+                    a -> a.terms(t -> t.field("brand")));
 
             s.aggregations("categories",
-                    a -> a.terms(t -> t.field("category.keyword")));
+                    a -> a.terms(t -> t.field("category")));
 
             s.aggregations("price_ranges",
                     a -> a.range(r -> r
