@@ -50,7 +50,7 @@ public class ProductSearchRepository {
     ) {
 
         String sql = """
-            SELECT id, name, price, rating, brand_name, category_name,
+            SELECT id, sku, name, price, rating, brand_name, category_name,
                    (
                      ts_rank(search_vector, websearch_to_tsquery('english', :query)) * 2
                      + similarity(name, :query) * 1.5
@@ -84,6 +84,7 @@ public class ProductSearchRepository {
             p.setRating(rs.getDouble("rating"));
             p.setBrand(rs.getString("brand_name"));
             p.setCategory(rs.getString("category_name"));
+            p.setSku(rs.getString("sku"));
             return p;
         });
     }
