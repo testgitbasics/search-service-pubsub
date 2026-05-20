@@ -5,25 +5,6 @@ spring:
     name: search-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/product_service
+    url: jdbc:postgresql://localhost:5432/vendor_search
     username: postgres
     password: root
-
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: search-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-        spring.json.use.type.headers: false
-        spring.json.value.default.type: com.searchplatform.searchservice.model.ProductCreatedEvent
-
-gcp:
-  project-id: test-project
-  pubsub:
-    emulator-host: 127.0.0.1:8085
-    topic: product-events
-    subscription: search-service-sub
