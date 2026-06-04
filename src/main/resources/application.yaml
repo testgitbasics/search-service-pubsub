@@ -8,3 +8,51 @@ spring:
     url: jdbc:postgresql://localhost:5432/vendor_search
     username: postgres
     password: root
+
+search-framework:
+
+  entities:
+
+    vendor:
+
+      table-name: vendor_search
+
+      search-fields:
+        - vendor_name
+        - company_name
+        - vendor_number
+
+      sortable-fields:
+        - vendor_name
+        - vendor_number
+        - company_name
+
+      filterable-fields:
+        - department
+        - supplier_status
+        - company_name
+        - location_id
+
+      search:
+
+        mode: FULL_TEXT
+
+      autocomplete:
+
+        enabled: true
+
+        fields:
+          - vendor_name
+          - company_name
+          - vendor_number
+
+        fuzzy-excluded-fields:
+          - vendor_number
+
+        capabilities:
+          prefix: true
+          fuzzy: true
+
+      features:
+        ranking: true
+        pagination: true

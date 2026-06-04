@@ -3,66 +3,60 @@ package com.searchplatform.searchservice.searchframework.config;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
 public class SearchConfigRegistry {
 
-    private final Map<String, EntitySearchConfig> configs =
-            new HashMap<>();
+    private final SearchFrameworkProperties properties;
+
+    private Map<String, EntitySearchConfig> configs;
+
+    public SearchConfigRegistry(
+            SearchFrameworkProperties properties
+    ) {
+        this.properties = properties;
+    }
 
     @PostConstruct
     public void init() {
 
-        FeatureConfig featureConfig =
-                new FeatureConfig();
+        this.configs =
+                properties.getEntities();
 
-        EntitySearchConfig vendorConfig =
-                new EntitySearchConfig();
+        validateConfigs();
+    }
 
-        vendorConfig.setEntityName("vendor");
+    private void validateConfigs() {
 
-        vendorConfig.setTableName("vendor_search");
+        configs.forEach((entity, config) -> {
 
-        vendorConfig.setSearchFields(
-                List.of(
-                        "vendor_name",
-                        "company_name",
-                        "vendor_number"
-                )
-        );
+            if (config.getTableName() == null
+                    || config.getTableName().isBlank()) {
 
-        vendorConfig.setAutocompleteFields(
-                List.of("vendor_name")
-        );
-
-        vendorConfig.setSortableFields(
-                List.of(
-                        "vendor_name",
-                        "vendor_number"
-                )
-        );
-
-        vendorConfig.setFilterableFields(
-                List.of(
-                        "department",
-                        "supplier_status"
-                )
-        );
-
-        vendorConfig.setFeatures(featureConfig);
-
-        configs.put(
-                "vendor",
-                vendorConfig
-        );
+                throw new RuntimeException(
+                        "table-name missing for entity: "
+                                + entity
+                );
+            }
+        });
     }
 
     public EntitySearchConfig get(
             String entity
     ) {
-        return configs.get(entity);
+
+        EntitySearchConfig config =
+                configs.get(entity);
+
+        if (config == null) {
+
+            throw new RuntimeException(
+                    "No config found for entity: "
+                            + entity
+            );
+        }
+
+        return config;
     }
 }

@@ -2,63 +2,39 @@ package com.searchplatform.searchservice.searchframework.config;
 
 public class FeatureConfig {
 
-    private boolean fullTextSearch = true;
+    private Boolean autocomplete = true;
 
-    private boolean autocomplete = true;
+    private Boolean ranking = true;
 
-    private boolean fuzzySearch = true;
+    private Boolean pagination = true;
 
-    private boolean ranking = true;
-
-    private boolean pagination = true;
-
-    private boolean sorting = true;
-
-    public boolean isFullTextSearch() {
-        return fullTextSearch;
-    }
-
-    public void setFullTextSearch(boolean fullTextSearch) {
-        this.fullTextSearch = fullTextSearch;
-    }
-
-    public boolean isAutocomplete() {
+    public Boolean getAutocomplete() {
         return autocomplete;
     }
 
-    public void setAutocomplete(boolean autocomplete) {
+    public void setAutocomplete(
+            Boolean autocomplete
+    ) {
         this.autocomplete = autocomplete;
     }
 
-    public boolean isFuzzySearch() {
-        return fuzzySearch;
-    }
-
-    public void setFuzzySearch(boolean fuzzySearch) {
-        this.fuzzySearch = fuzzySearch;
-    }
-
-    public boolean isRanking() {
+    public Boolean getRanking() {
         return ranking;
     }
 
-    public void setRanking(boolean ranking) {
+    public void setRanking(
+            Boolean ranking
+    ) {
         this.ranking = ranking;
     }
 
-    public boolean isPagination() {
+    public Boolean getPagination() {
         return pagination;
     }
 
-    public void setPagination(boolean pagination) {
+    public void setPagination(
+            Boolean pagination
+    ) {
         this.pagination = pagination;
-    }
-
-    public boolean isSorting() {
-        return sorting;
-    }
-
-    public void setSorting(boolean sorting) {
-        this.sorting = sorting;
     }
 }

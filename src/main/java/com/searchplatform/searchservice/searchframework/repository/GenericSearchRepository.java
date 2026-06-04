@@ -24,7 +24,8 @@ public class GenericSearchRepository {
 
     public GenericSearchRepository(
             NamedParameterJdbcTemplate jdbc,
-            AutoCompleteQueryBuilder queryBuilder, SearchQueryBuilder searchQueryBuilder
+            AutoCompleteQueryBuilder queryBuilder,
+            SearchQueryBuilder searchQueryBuilder
     ) {
         this.jdbc = jdbc;
         this.queryBuilder = queryBuilder;
@@ -74,6 +75,12 @@ public class GenericSearchRepository {
                         request
                 );
 
+        String countSql =
+                searchQueryBuilder.buildCountQuery(
+                        config,
+                        request
+                );
+
         MapSqlParameterSource params =
                 new MapSqlParameterSource();
 
@@ -99,11 +106,19 @@ public class GenericSearchRepository {
                     .forEach(params::addValue);
         }
 
+        Long total =
+                jdbc.queryForObject(
+                        countSql,
+                        params,
+                        Long.class
+                );
+
         List<Map<String, Object>> rows =
                 jdbc.queryForList(
                         sql,
                         params
                 );
+
         rows.forEach(row -> {
             row.remove("search_vector");
         });
@@ -121,9 +136,7 @@ public class GenericSearchRepository {
                 request.getSize()
         );
 
-        response.setTotal(
-                (long) rows.size()
-        );
+        response.setTotal(total);
 
         return response;
     }

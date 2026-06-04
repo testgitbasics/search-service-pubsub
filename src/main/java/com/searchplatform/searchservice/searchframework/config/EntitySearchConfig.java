@@ -1,30 +1,30 @@
 package com.searchplatform.searchservice.searchframework.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EntitySearchConfig {
 
-    private String entityName;
-
     private String tableName;
 
-    private List<String> searchFields;
+    private List<String> searchFields =
+            new ArrayList<>();
 
-    private List<String> autocompleteFields;
+    private List<String> sortableFields =
+            new ArrayList<>();
 
-    private List<String> sortableFields;
+    private SearchConfig search =
+            new SearchConfig();
 
-    private List<String> filterableFields;
+    private AutoCompleteConfig autocomplete =
+            new AutoCompleteConfig();
 
-    private FeatureConfig features;
+    private List<String> filterableFields =
+            new ArrayList<>();
 
-    public String getEntityName() {
-        return entityName;
-    }
 
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
-    }
+    private FeatureConfig features =
+            new FeatureConfig();
 
     public String getTableName() {
         return tableName;
@@ -34,43 +34,64 @@ public class EntitySearchConfig {
         this.tableName = tableName;
     }
 
-    public List<String> getSearchFields() {
-        return searchFields;
-    }
-
-    public void setSearchFields(List<String> searchFields) {
-        this.searchFields = searchFields;
-    }
-
-    public List<String> getAutocompleteFields() {
-        return autocompleteFields;
-    }
-
-    public void setAutocompleteFields(List<String> autocompleteFields) {
-        this.autocompleteFields = autocompleteFields;
-    }
-
-    public List<String> getSortableFields() {
-        return sortableFields;
-    }
-
-    public void setSortableFields(List<String> sortableFields) {
-        this.sortableFields = sortableFields;
-    }
 
     public List<String> getFilterableFields() {
         return filterableFields;
     }
 
-    public void setFilterableFields(List<String> filterableFields) {
+    public void setFilterableFields(
+            List<String> filterableFields
+    ) {
         this.filterableFields = filterableFields;
+    }
+
+    public SearchConfig getSearch() {
+        return search;
+    }
+
+    public void setSearch(
+            SearchConfig search
+    ) {
+        this.search = search;
     }
 
     public FeatureConfig getFeatures() {
         return features;
     }
 
-    public void setFeatures(FeatureConfig features) {
+    public void setFeatures(
+            FeatureConfig features
+    ) {
         this.features = features;
+    }
+
+    public List<String> getSearchFields() {
+        return searchFields;
+    }
+
+    public void setSearchFields(
+            List<String> searchFields
+    ) {
+        this.searchFields = searchFields;
+    }
+
+    public AutoCompleteConfig getAutocomplete() {
+        return autocomplete;
+    }
+
+    public void setAutocomplete(
+            AutoCompleteConfig autocomplete
+    ) {
+        this.autocomplete = autocomplete;
+    }
+
+    public List<String> getSortableFields() {
+        return sortableFields;
+    }
+
+    public void setSortableFields(
+            List<String> sortableFields
+    ) {
+        this.sortableFields = sortableFields;
     }
 }

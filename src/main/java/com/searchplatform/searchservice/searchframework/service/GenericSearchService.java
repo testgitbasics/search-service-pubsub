@@ -33,6 +33,15 @@ public class GenericSearchService {
         EntitySearchConfig config =
                 registry.get(entity);
 
+        if (!config.getAutocomplete()
+                .getEnabled()) {
+
+            throw new RuntimeException(
+                    "Autocomplete disabled for entity: "
+                            + entity
+            );
+        }
+
         return repository.autoComplete(
                 config,
                 query

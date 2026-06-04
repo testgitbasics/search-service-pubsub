@@ -12,9 +12,11 @@ public class SearchRequest {
 
     private Integer size = 10;
 
-    private String sortField;
-
     private String order = "DESC";
+
+    private String sortBy;
+
+    private String sortDirection;
 
     public String getQuery() {
         return query;
@@ -48,19 +50,31 @@ public class SearchRequest {
         this.size = size;
     }
 
-    public String getSortField() {
-        return sortField;
-    }
-
-    public void setSortField(String sortField) {
-        this.sortField = sortField;
-    }
-
     public String getOrder() {
         return order;
     }
 
     public void setOrder(String order) {
         this.order = order;
+    }
+
+    public String getSortBy() {
+        return sortBy;
+    }
+
+    public String getSortDirection() {
+        return sortDirection;
+    }
+
+    public void setSortBy(
+            String sortBy
+    ) {
+        this.sortBy = sortBy;
+    }
+
+    public void setSortDirection(
+            String sortDirection
+    ) {
+        this.sortDirection = sortDirection;
     }
 }
