@@ -114,8 +114,8 @@ public class AutoCompleteQueryBuilder {
                 new StringBuilder();
 
         sql.append("""
-            SELECT
-            """);
+        SELECT
+        """);
 
         sql.append(
                 config.getAutocomplete()
@@ -124,10 +124,10 @@ public class AutoCompleteQueryBuilder {
         );
 
         sql.append("""
-             AS value,
+         AS value,
 
-             GREATEST(
-            """);
+         GREATEST(
+        """);
 
         boolean firstScore = true;
 
@@ -139,60 +139,89 @@ public class AutoCompleteQueryBuilder {
                 sql.append(", ");
             }
 
-            sql.append("""
-                    CASE
+            boolean fuzzyAllowed =
+                    !config.getAutocomplete()
+                            .getFuzzyExcludedFields()
+                            .contains(field);
 
-                        WHEN LOWER(CAST(
-                    """);
+            sql.append("""
+                CASE
+
+                    WHEN LOWER(CAST(
+                """);
 
             sql.append(field);
 
             sql.append("""
-                            AS TEXT
-                        )) = LOWER(:query)
+                        AS TEXT
+                    )) = LOWER(:query)
 
-                        THEN 1.0
+                    THEN 1.0
 
-                        WHEN CAST(
-                    """);
-
-            sql.append(field);
-
-            sql.append("""
-                            AS TEXT
-                        ) ILIKE '%' || '%'
-
-                        THEN 0.8
-
-                        ELSE word_similarity(
-                            CAST(
-                    """);
+                    WHEN CAST(
+                """);
 
             sql.append(field);
 
             sql.append("""
-                            AS TEXT
-                            ),
-                            :query
-                        )
+                        AS TEXT
+                    ) ILIKE :query || '%'
 
-                    END
-                    """);
+                    THEN 0.9
+
+                    WHEN CAST(
+                """);
+
+            sql.append(field);
+
+            sql.append("""
+                        AS TEXT
+                    ) ILIKE '%' || :query || '%'
+
+                    THEN 0.8
+                """);
+
+            if (fuzzyAllowed) {
+
+                sql.append("""
+                    ELSE word_similarity(
+                        CAST(
+                """);
+
+                sql.append(field);
+
+                sql.append("""
+                        AS TEXT
+                        ),
+                        :query
+                    )
+                """);
+
+            } else {
+
+                sql.append("""
+                    ELSE 0
+                """);
+            }
+
+            sql.append("""
+                END
+                """);
 
             firstScore = false;
         }
 
         sql.append("""
-            ) AS score
+        ) AS score
 
-            FROM
-            """);
+        FROM
+        """);
 
         sql.append(config.getTableName());
 
         sql.append("""
-             WHERE
-            """);
+         WHERE
+        """);
 
         boolean firstCondition = true;
 
@@ -200,43 +229,39 @@ public class AutoCompleteQueryBuilder {
                 config.getAutocomplete()
                         .getFields()) {
 
-            if (prefixEnabled) {
+            boolean fuzzyAllowed =
+                    !config.getAutocomplete()
+                            .getFuzzyExcludedFields()
+                            .contains(field);
 
-                if (!firstCondition) {
-                    sql.append(" OR ");
-                }
-
-                sql.append(
-                        "CAST("
-                                + field
-                                + " AS TEXT) ILIKE :query || '%'"
-                );
-
-                firstCondition = false;
+            if (!firstCondition) {
+                sql.append(" OR ");
             }
 
-            if (fuzzyEnabled) {
+            sql.append(
+                    "CAST("
+                            + field
+                            + " AS TEXT) ILIKE '%' || :query || '%'"
+            );
 
-                if (!firstCondition) {
-                    sql.append(" OR ");
-                }
+            if (fuzzyAllowed) {
 
                 sql.append(
-                        "word_similarity(CAST("
+                        " OR word_similarity(CAST("
                                 + field
                                 + " AS TEXT), :query) > 0.2"
                 );
-
-                firstCondition = false;
             }
+
+            firstCondition = false;
         }
 
         sql.append("""
-            
-            ORDER BY score DESC
-            
-            LIMIT 10
-            """);
+        
+        ORDER BY score DESC
+        
+        LIMIT 10
+        """);
 
         return sql.toString();
     }
