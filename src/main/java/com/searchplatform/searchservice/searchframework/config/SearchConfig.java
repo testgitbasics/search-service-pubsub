@@ -8,6 +8,16 @@ public class SearchConfig {
     private SearchCapabilityConfig capabilities =
             new SearchCapabilityConfig();
 
+    public Double getFuzzyThreshold() {
+        return fuzzyThreshold;
+    }
+
+    public void setFuzzyThreshold(Double fuzzyThreshold) {
+        this.fuzzyThreshold = fuzzyThreshold;
+    }
+
+    private Double fuzzyThreshold = 0.2;
+
     public SearchMode getMode() {
         return mode;
     }

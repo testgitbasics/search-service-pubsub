@@ -37,6 +37,11 @@ search-framework:
 
         mode: FULL_TEXT
 
+        capabilities:
+          fuzzy: true
+
+        fuzzy-threshold: 0.2
+
       autocomplete:
 
         enabled: true
@@ -53,6 +58,8 @@ search-framework:
           prefix: true
           fuzzy: true
 
+        fuzzy-threshold: 0.2
+
       features:
-        ranking: true
+        ranking: false
         pagination: true

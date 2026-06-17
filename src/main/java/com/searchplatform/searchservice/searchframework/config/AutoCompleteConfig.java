@@ -13,6 +13,16 @@ public class AutoCompleteConfig {
     private List<String> fuzzyExcludedFields =
             new ArrayList<>();
 
+    public Double getFuzzyThreshold() {
+        return fuzzyThreshold;
+    }
+
+    public void setFuzzyThreshold(Double fuzzyThreshold) {
+        this.fuzzyThreshold = fuzzyThreshold;
+    }
+
+    private Double fuzzyThreshold = 0.2;
+
     private AutoCompleteCapabilityConfig capabilities =
             new AutoCompleteCapabilityConfig();
 

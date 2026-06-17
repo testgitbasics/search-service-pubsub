@@ -64,7 +64,8 @@ public class SearchQueryBuilder {
         } else {
 
             appendFullTextConditions(
-                    sql
+                    sql,
+                    config
             );
         }
 
@@ -125,7 +126,8 @@ public class SearchQueryBuilder {
         } else {
 
             appendFullTextConditions(
-                    sql
+                    sql,
+                    config
             );
         }
 
@@ -163,16 +165,42 @@ public class SearchQueryBuilder {
     }
 
     private void appendFullTextConditions(
-            StringBuilder sql
+            StringBuilder sql,
+            EntitySearchConfig config
     ) {
 
+        boolean fuzzyEnabled =
+                config.getSearch()
+                        .getCapabilities()
+                        .getFuzzy();
+
         sql.append("""
+        (
             search_vector @@
             websearch_to_tsquery(
                 'english',
                 :query
             )
-            """);
+        )
+        """);
+
+        if (fuzzyEnabled) {
+
+            double threshold =
+                    config.getSearch()
+                            .getFuzzyThreshold();
+
+            for (String field :
+                    config.getSearchFields()) {
+
+                sql.append(
+                        " OR similarity("
+                                + field
+                                + "::text, :query) > "
+                                + threshold
+                );
+            }
+        }
     }
 
     private void appendFilters(
@@ -234,7 +262,7 @@ public class SearchQueryBuilder {
             return;
         }
 
-        if (rankingEnabled) {
+        if (rankingEnabled && config.getSearch().getMode()  == SearchMode.FULL_TEXT) {
 
             sql.append("""
                 

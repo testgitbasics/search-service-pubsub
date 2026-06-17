@@ -181,7 +181,7 @@ public class AutoCompleteQueryBuilder {
                     THEN 0.8
                 """);
 
-            if (fuzzyAllowed) {
+            if (fuzzyEnabled && fuzzyAllowed) {
 
                 sql.append("""
                     ELSE word_similarity(
@@ -244,12 +244,17 @@ public class AutoCompleteQueryBuilder {
                             + " AS TEXT) ILIKE '%' || :query || '%'"
             );
 
-            if (fuzzyAllowed) {
+            Double threshold =
+                    config.getAutocomplete()
+                            .getFuzzyThreshold();
+
+            if (fuzzyEnabled && fuzzyAllowed) {
 
                 sql.append(
                         " OR word_similarity(CAST("
                                 + field
-                                + " AS TEXT), :query) > 0.2"
+                                + " AS TEXT), :query) > "
+                                + threshold
                 );
             }
 
